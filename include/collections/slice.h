@@ -29,7 +29,7 @@ void gSliceInit(gSlice *slice, const gPtr ptr, const size_t size, const size_t c
  * @param index
  * @return
  */
-void *gSliceAt(gAllocator *allocator, const gSlice *slice, const size_t index);
+void *gSliceAt(const gAllocator *allocator, const gSlice *slice, const size_t index);
 
 /**
  * Set the element at the specified index
@@ -39,13 +39,13 @@ void *gSliceAt(gAllocator *allocator, const gSlice *slice, const size_t index);
  * @param element
  * @return
  */
-bool gSliceSet(gAllocator *allocator, gSlice *slice, const size_t index, const void *element);
+bool gSliceSet(const gAllocator *allocator, gSlice *slice, const size_t index, const void *element);
 
 /**
  * Free the slice
  * @param allocator Allocator, needed to convert the relative pointer to an absolute pointer
  * @param slice
  */
-void gSliceFree(gAllocator *allocator, gSlice *slice);
+void gSliceFree(const gAllocator *allocator, gSlice *slice);
 
 #endif //SLICE_H

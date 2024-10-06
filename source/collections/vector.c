@@ -1,7 +1,7 @@
 #include "collections/vector.h"
 #include <string.h>
 
-bool gVectorInit(gAllocator *allocator, gVector *vector, const size_t elementSize, const size_t initialCapacity) {
+bool gVectorInit(const gAllocator *allocator, gVector *vector, const size_t elementSize, const size_t initialCapacity) {
     vector->elementSize = elementSize;
     vector->capacity = initialCapacity;
     vector->count = 0;
@@ -15,7 +15,7 @@ bool gVectorInit(gAllocator *allocator, gVector *vector, const size_t elementSiz
     return true;
 }
 
-bool gVectorAdd(gAllocator *allocator, gVector *vector, const void *element) {
+bool gVectorAdd(const gAllocator *allocator, gVector *vector, const void *element) {
     if (vector->count == vector->capacity) {
         vector->capacity *= 2;
         const gPtr newData = allocator->reAlloc(allocator, vector->data.data, vector->capacity * vector->elementSize);
@@ -67,7 +67,7 @@ void gVectorClear(gVector *vector) {
     vector->data.count = 0;
 }
 
-void gVectorFree(gAllocator *allocator, gVector *vector) {
+void gVectorFree(const gAllocator *allocator, gVector *vector) {
     if (vector->data.data == gNull) return;
     allocator->free(allocator, vector->data.data);
     vector->data.data = gNull;

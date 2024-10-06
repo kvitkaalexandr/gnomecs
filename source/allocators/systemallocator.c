@@ -8,15 +8,15 @@ gPtr __absPtrToGPtr(const gAllocator *allocator, const void *ptr) {
     return (gPtr)ptr;
 }
 
-gPtr __alloc(gAllocator *allocator, const size_t size) {
+gPtr __alloc(const gAllocator *allocator, const size_t size) {
     return (gPtr)malloc(size);
 }
 
-gPtr __reAlloc(gAllocator *allocator, const gPtr ptr, const size_t newSize) {
+gPtr __reAlloc(const gAllocator *allocator, const gPtr ptr, const size_t newSize) {
     return (gPtr)realloc((void*)ptr, newSize);
 }
 
-void __free(gAllocator *allocator, const gPtr ptr) {
+void __free(const gAllocator *allocator, const gPtr ptr) {
     free((void*)ptr);
 }
 

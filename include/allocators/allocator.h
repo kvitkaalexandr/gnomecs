@@ -17,11 +17,11 @@ typedef uintptr_t gPtr;
 typedef struct gAllocator{
     void* heap;
 
-    gPtr (*alloc)(struct gAllocator *allocator, const size_t size);
-    gPtr (*reAlloc)(struct gAllocator *allocator, const gPtr ptr, const size_t newSize);
-    void (*free)(struct gAllocator *allocator,const gPtr ptr);
-    void* (*relToAbs)(struct gAllocator *allocator, const gPtr ptr);
-    gPtr (*absToRel)(struct gAllocator *allocator, const void* ptr);
+    gPtr (*alloc)(const struct gAllocator *allocator, const size_t size);
+    gPtr (*reAlloc)(const struct gAllocator *allocator, const gPtr ptr, const size_t newSize);
+    void (*free)(const struct gAllocator *allocator,const gPtr ptr);
+    void* (*relToAbs)(const struct gAllocator *allocator, const gPtr ptr);
+    gPtr (*absToRel)(const struct gAllocator *allocator, const void* ptr);
 } gAllocator;
 
 typedef struct {

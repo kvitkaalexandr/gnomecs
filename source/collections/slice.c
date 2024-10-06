@@ -7,20 +7,20 @@ void gSliceInit(gSlice *slice, const gPtr ptr, const size_t size, const size_t c
     slice->data = ptr;
 }
 
-void *gSliceAt(gAllocator *allocator, const gSlice *slice, const size_t index) {
+void *gSliceAt(const gAllocator *allocator, const gSlice *slice, const size_t index) {
     if (index >= slice->count) return NULL;
 
     return allocator->relToAbs(allocator, slice->data + index * slice->size);
 }
 
-bool gSliceSet(gAllocator *allocator, gSlice *slice, const size_t index, const void *element) {
+bool gSliceSet(const gAllocator *allocator, gSlice *slice, const size_t index, const void *element) {
     if (index >= slice->count) return false;
     void *itemPtr = allocator->relToAbs(allocator, slice->data + index * slice->size);
     memcpy(itemPtr, element, slice->size);
     return true;
 }
 
-void gSliceFree(gAllocator *allocator, gSlice *slice) {
+void gSliceFree(const gAllocator *allocator, gSlice *slice) {
     if (slice->data != gNull) allocator->free(allocator, slice->data);
     slice->data = gNull;
     slice->count = 0;
