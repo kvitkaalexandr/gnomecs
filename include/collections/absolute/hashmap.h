@@ -4,8 +4,10 @@
 #include <stdbool.h>
 #include <stddef.h>
 
+//todo: rewrite this to use relative pointers
+
 typedef int(*gHashFunction)(const void *key, const size_t keySize);
-typedef bool(*gEqualFunction)(const void *key1, const void *key2, const size_t keySize);
+typedef bool(*gEqualFunction)(const void *keys1, const void *key2, const size_t keySize);
 
 typedef struct gHashMapEntry {
     struct gHashMapEntry *next;

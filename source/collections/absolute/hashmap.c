@@ -4,6 +4,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+//todo: rewrite this to use relative pointers
+
 size_t getBucket(gHashMap *map, const void *key) {
     return map->hashFunction(key, map->keySize) % map->capacity;
 }
