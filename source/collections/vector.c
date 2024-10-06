@@ -1,24 +1,24 @@
 #include "collections/vector.h"
 #include <string.h>
 
-bool gVectorInit(const gAllocator *allocator, gVector *vector, const size_t elementSize, const size_t initialCapacity) {
+bool gVectorInit(gAllocator *allocator, gVector *vector, const size_t elementSize, const size_t initialCapacity) {
     vector->elementSize = elementSize;
     vector->capacity = initialCapacity;
     vector->count = 0;
 
     const size_t byteSize = initialCapacity * elementSize;
-    const gPtr ptr = gAllocatorAlloc(allocator, byteSize);
+    const gPtr ptr = allocator->alloc(allocator, byteSize);
     if (ptr == gNull) return false;
-    memset(gPtrToAbsPtr(allocator, ptr), 0, byteSize);
+    memset(allocator->relToAbs(allocator, ptr), 0, byteSize);
 
     gSliceInit(&vector->data, ptr, elementSize, initialCapacity);
     return true;
 }
 
-bool gVectorAdd(const gAllocator *allocator, gVector *vector, const void *element) {
+bool gVectorAdd(gAllocator *allocator, gVector *vector, const void *element) {
     if (vector->count == vector->capacity) {
         vector->capacity *= 2;
-        const gPtr newData = gAllocatorReAlloc(allocator, vector->data.data, vector->capacity * vector->elementSize);
+        const gPtr newData = allocator->reAlloc(allocator, vector->data.data, vector->capacity * vector->elementSize);
         if (newData == gNull) return false;
         gSliceInit(&vector->data, newData, vector->elementSize, vector->capacity);
     }
@@ -67,8 +67,8 @@ void gVectorClear(gVector *vector) {
     vector->data.count = 0;
 }
 
-void gVectorFree(const gAllocator *allocator, gVector *vector) {
+void gVectorFree(gAllocator *allocator, gVector *vector) {
     if (vector->data.data == gNull) return;
-    gAllocatorFree(allocator, vector->data.data);
+    allocator->free(allocator, vector->data.data);
     vector->data.data = gNull;
 }

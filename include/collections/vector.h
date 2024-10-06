@@ -24,7 +24,7 @@ typedef struct {
  * @param initialCapacity Initial capacity
  * @return
  */
-bool gVectorInit(const gAllocator *allocator, gVector *vector, const size_t elementSize, const size_t initialCapacity);
+bool gVectorInit(gAllocator *allocator, gVector *vector, const size_t elementSize, const size_t initialCapacity);
 
 /**
  * Add an element to the vector
@@ -33,7 +33,7 @@ bool gVectorInit(const gAllocator *allocator, gVector *vector, const size_t elem
  * @param element Element to add
  * @return
  */
-bool gVectorAdd(const gAllocator *allocator, gVector *vector, const void *element);
+bool gVectorAdd(gAllocator *allocator, gVector *vector, const void *element);
 
 /**
  * Remove an element from the vector
@@ -74,6 +74,6 @@ void gVectorClear(gVector *vector);
  * @param allocator Allocator
  * @param vector Vector
  */
-void gVectorFree(const gAllocator *allocator, gVector *vector);
+void gVectorFree(gAllocator *allocator, gVector *vector);
 
 #endif //VECTOR_H

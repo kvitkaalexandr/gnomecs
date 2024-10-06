@@ -4,6 +4,14 @@
 #include <stddef.h>
 #include <string.h>
 
+void *gPtrToAbsPtr(const gAllocator *allocator, const gPtr ptr) {
+    return (void*)allocator->heap + ptr;
+}
+
+gPtr absPtrToGPtr(const gAllocator *allocator, const void *ptr) {
+    return (gPtr)ptr - (gPtr)allocator->heap;
+}
+
 gAllocator* gAllocatorCreate(const size_t heapSize, const size_t defaultBlockSize) {
     gAllocator* a = malloc(sizeof(gAllocator));
     if (a == NULL) return NULL;
@@ -19,6 +27,12 @@ gAllocator* gAllocatorCreate(const size_t heapSize, const size_t defaultBlockSiz
     state->freeBlock = gNull;
     state->head = sizeof(gAllocatorState);
     state->defaultBlockSize = defaultBlockSize;
+
+    a->alloc = gAllocatorAlloc;
+    a->reAlloc = gAllocatorReAlloc;
+    a->free = gAllocatorFree;
+    a->relToAbs = gPtrToAbsPtr;
+    a->absToRel = absPtrToGPtr;
 
     return a;
 }
@@ -42,7 +56,7 @@ void gAllocatorUseBlock(gAllocatorBlock* block) {
     block->nextFree = gNull;
 }
 
-gPtr gAllocatorAlloc(const gAllocator* allocator, const size_t size) {
+gPtr gAllocatorAlloc(gAllocator* allocator, const size_t size) {
     assert(size > 0);
     gAllocatorState* state = gAllocatorGetState(allocator);
     const size_t fittedSize = max(size, state->defaultBlockSize);
@@ -50,7 +64,7 @@ gPtr gAllocatorAlloc(const gAllocator* allocator, const size_t size) {
 
     gPtr freeBlock = state->freeBlock;
     while (freeBlock != gNull) {
-        gAllocatorBlock* block = gPtrToAbsPtr(allocator, freeBlock);
+        gAllocatorBlock* block = allocator->relToAbs(allocator, freeBlock);
         if (block->size >= alignedSize) {
             gAllocatorUseBlock(block);
             state->freeBlock = block->nextFree;
@@ -68,7 +82,7 @@ gPtr gAllocatorAlloc(const gAllocator* allocator, const size_t size) {
         //3. Extendable multi-block heap (allocate new heap and link to old heap)
         if (newHead >= state->size) return gNull;
 
-        gAllocatorBlock* newBlock = gPtrToAbsPtr(allocator, state->head);
+        gAllocatorBlock* newBlock = allocator->relToAbs(allocator, state->head);
         gAllocatorInitBlock(newBlock, alignedSize);
         gAllocatorUseBlock(newBlock);
 
@@ -81,17 +95,17 @@ gPtr gAllocatorAlloc(const gAllocator* allocator, const size_t size) {
     return gNull;
 }
 
-void gAllocatorFree(const gAllocator* allocator, const gPtr ptr) {
+void gAllocatorFree(gAllocator* allocator, const gPtr ptr) {
     assert(ptr != gNull);
     gAllocatorState* state = gAllocatorGetState(allocator);
     const gPtr blockPtr = ptr - sizeof(gAllocatorBlock);
-    gAllocatorBlock* block = (gAllocatorBlock*)gPtrToAbsPtr(allocator, blockPtr);
+    gAllocatorBlock* block = allocator->relToAbs(allocator, blockPtr);
     block->status = gAllocatorBlockFree;
     block->nextFree = state->freeBlock;
     state->freeBlock = blockPtr;
 }
 
-gPtr gAllocatorReAlloc(const gAllocator *allocator, const gPtr ptr, const size_t newSize) {
+gPtr gAllocatorReAlloc(gAllocator *allocator, const gPtr ptr, const size_t newSize) {
     assert(ptr != gNull);
     const gAllocatorBlock* block = gAllocatorGetBlock(allocator, ptr);
     if (block->size >= newSize) return ptr;
@@ -99,14 +113,14 @@ gPtr gAllocatorReAlloc(const gAllocator *allocator, const gPtr ptr, const size_t
     const gPtr newPtr = gAllocatorAlloc(allocator, newSize);
     if (newPtr == gNull) return gNull;
 
-    memcpy(gPtrToAbsPtr(allocator, newPtr), gPtrToAbsPtr(allocator, ptr), newSize);
+    memcpy(allocator->relToAbs(allocator, newPtr), allocator->relToAbs(allocator, ptr), newSize);
     gAllocatorFree(allocator, ptr);
     return newPtr;
 }
 
-gAllocatorBlock* gAllocatorGetBlock(const gAllocator* allocator, const gPtr ptr) {
+gAllocatorBlock* gAllocatorGetBlock(gAllocator* allocator, const gPtr ptr) {
     const gPtr blockPtr = ptr - sizeof(gAllocatorBlock);
-    gAllocatorBlock* block = gPtrToAbsPtr(allocator, blockPtr);
+    gAllocatorBlock* block = allocator->relToAbs(allocator, blockPtr);
     return block;
 }
 

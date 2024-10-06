@@ -14,18 +14,14 @@
 typedef uintptr_t gPtr;
 #define gNull 0
 
-/**
- * Convert a relative pointer to an absolute pointer
- */
-#define gPtrToAbsPtr(allocator, ptr) ((void*)allocator->heap + ptr)
-
-/**
- * Convert an absolute pointer to a relative pointer
- */
-#define absPtrToGPtr(allocator, ptr) ((gPtr)ptr - (gPtr)allocator->heap)
-
-typedef struct {
+typedef struct gAllocator{
     void* heap;
+
+    gPtr (*alloc)(struct gAllocator *allocator, const size_t size);
+    gPtr (*reAlloc)(struct gAllocator *allocator, const gPtr ptr, const size_t newSize);
+    void (*free)(struct gAllocator *allocator,const gPtr ptr);
+    void* (*relToAbs)(struct gAllocator *allocator, const gPtr ptr);
+    gPtr (*absToRel)(struct gAllocator *allocator, const void* ptr);
 } gAllocator;
 
 typedef struct {
@@ -34,6 +30,17 @@ typedef struct {
     gPtr freeBlock;
     gPtr head;
 } gAllocatorState;
+
+/**
+ * Convert a relative pointer to an absolute pointer
+ */
+void *gPtrToAbsPtr(const gAllocator *allocator, const gPtr ptr);
+
+
+/**
+ * Convert an absolute pointer to a relative pointer
+ */
+gPtr absPtrToGPtr(const gAllocator *allocator, const void *ptr);
 
 /**
  * Get the allocator state
@@ -70,14 +77,14 @@ void gAllocatorSelfFree(gAllocator* allocator);
  * @param size The size of the memory to allocate
  * @return The pointer to the allocated memory
  */
-gPtr gAllocatorAlloc(const gAllocator* allocator, const size_t size);
+gPtr gAllocatorAlloc(gAllocator* allocator, const size_t size);
 
 /**
  * Free memory
  * @param allocator The allocator
  * @param ptr The pointer to the memory to free
  */
-void gAllocatorFree(const gAllocator* allocator, const gPtr ptr);
+void gAllocatorFree(gAllocator* allocator, const gPtr ptr);
 
 /**
  * Reallocate memory
@@ -86,7 +93,7 @@ void gAllocatorFree(const gAllocator* allocator, const gPtr ptr);
  * @param newSize The new size of the memory
  * @return The pointer to the reallocated memory
  */
-gPtr gAllocatorReAlloc(const gAllocator *allocator, const gPtr ptr, const size_t newSize);
+gPtr gAllocatorReAlloc(gAllocator *allocator, const gPtr ptr, const size_t newSize);
 
 /**
  * Copy the allocator to a different location
@@ -115,7 +122,7 @@ void gAllocatorUseBlock(gAllocatorBlock* block);
 /**
  * Private function to get the block of a pointer
  */
-gAllocatorBlock* gAllocatorGetBlock(const gAllocator* allocator, const gPtr ptr);
+gAllocatorBlock* gAllocatorGetBlock(gAllocator* allocator, const gPtr ptr);
 
 #define align(ptr, alignment) ((ptr + alignment - 1) & ~(alignment - 1))
 #define max(a,b) \

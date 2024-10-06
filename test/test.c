@@ -12,6 +12,7 @@
 #include "search/iterator.h"
 #include "components/components.h"
 #include "collections/absolute/hashmap.h"
+#include "allocators/systemallocator.h"
 
 /**
  * Test not finished. Just a temporary code to test the new features etc
@@ -111,10 +112,8 @@ void gBitSetTest() {
     assert(!gBitSetAny(&bs, &otherBs));
 }
 
-void gSliceTest() {
-    gAllocator *alloc = gAllocatorCreate(1024, 256);
-
-    gPtr ptr = gAllocatorAlloc(alloc, 32);
+void gSliceTestInternal(gAllocator *alloc) {
+    gPtr ptr = alloc->alloc(alloc, 32);
     gSlice slice;
     gSliceInit(&slice, ptr, 1, 16);
 
@@ -123,20 +122,26 @@ void gSliceTest() {
     char *b = gSliceAt(alloc, &slice, 15);
     *b = 'b';
 
-    char *ra = gPtrToAbsPtr(alloc, ptr);
-    char *rb = gPtrToAbsPtr(alloc, ptr + 15);
+    char *ra = alloc->relToAbs(alloc, ptr);
+    char *rb = alloc->relToAbs(alloc, ptr + 15);
     assert(*ra == 'a');
     assert(*rb == 'b');
 
     char *nPtr = gSliceAt(alloc, &slice, 16);
     assert(nPtr == NULL);
-
-    gAllocatorSelfFree(alloc);
 }
 
-void gVectorTest() {
-    gAllocator *alloc = gAllocatorCreate(16000, 32);
+void gSliceTest() {
+    gAllocator *alloc = gAllocatorCreate(1024, 256);
+    gSliceTestInternal(alloc);
+    gAllocatorSelfFree(alloc);
 
+    gAllocator *sysAlloc = gSystemAllocatorCreate();
+    gSliceTestInternal(sysAlloc);
+    gAllocatorSelfFree(sysAlloc);
+}
+
+void gVectorTestInternal(gAllocator *alloc) {
     gVector vector;
     gVectorInit(alloc, &vector, sizeof(int), 1);
 
@@ -172,12 +177,19 @@ void gVectorTest() {
     assert(i0 == NULL);
 
     gVectorFree(alloc, &vector);
-    gAllocatorSelfFree(alloc);
 }
 
-void gChunkedListTest() {
+void gVectorTest() {
     gAllocator *alloc = gAllocatorCreate(16000, 32);
+    gVectorTestInternal(alloc);
+    gAllocatorSelfFree(alloc);
 
+    gAllocator *sysAlloc = gSystemAllocatorCreate();
+    gVectorTestInternal(sysAlloc);
+    gAllocatorSelfFree(sysAlloc);
+}
+
+void gChunkedListTestInternal(gAllocator *alloc) {
     gChunkedList chunkedList;
     gChunkedListInit(alloc, &chunkedList, sizeof(int), 4);
 
@@ -205,12 +217,19 @@ void gChunkedListTest() {
     testInt(*x, newVal);
 
     gChunkedListFree(alloc, &chunkedList);
-    gAllocatorSelfFree(alloc);
 }
 
-void gTableTest() {
+void gChunkedListTest() {
     gAllocator *alloc = gAllocatorCreate(16000, 32);
+    gChunkedListTestInternal(alloc);
+    gAllocatorSelfFree(alloc);
 
+    gAllocator *sysAlloc = gSystemAllocatorCreate();
+    gChunkedListTestInternal(sysAlloc);
+    gAllocatorSelfFree(sysAlloc);
+}
+
+void gTableTestInternal(gAllocator *alloc) {
     gTable table;
     gTableInit(alloc, &table, 4, 4);
 
@@ -253,7 +272,17 @@ void gTableTest() {
     testChar(*(char*)gChunkedListAt(alloc, charLow, 1), c2);
     testChar(*(char*)gChunkedListAt(alloc, charLow, 2), c3);
 
+    gTableFree(alloc, &table);
+}
+
+void gTableTest() {
+    gAllocator *alloc = gAllocatorCreate(16000, 32);
+    gTableTestInternal(alloc);
     gAllocatorSelfFree(alloc);
+
+    gAllocator *sysAlloc = gSystemAllocatorCreate();
+    gTableTestInternal(sysAlloc);
+    gAllocatorSelfFree(sysAlloc);
 }
 
 _component(position, {

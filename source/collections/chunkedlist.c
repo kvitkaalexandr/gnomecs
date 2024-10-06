@@ -20,9 +20,9 @@ void gChunkedListFree(const gAllocator *allocator, gChunkedList *chunkedList) {
 bool gChunkedListAllocChunk(gAllocator *allocator, gChunkedList *chunkedList) {
     const size_t byteSize = chunkedList->elementSize * chunkedList->chunkSize;
 
-    const gPtr newChunk = gAllocatorAlloc(allocator, byteSize);
+    const gPtr newChunk = allocator->alloc(allocator, byteSize);
     if (newChunk == gNull) return false;
-    memset(gPtrToAbsPtr(allocator, newChunk), 0, byteSize);
+    memset(allocator->relToAbs(allocator, newChunk), 0, byteSize);
 
     gSlice slice;
     gSliceInit(&slice, newChunk, chunkedList->elementSize, chunkedList->chunkSize);
