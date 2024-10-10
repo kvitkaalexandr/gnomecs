@@ -4,6 +4,7 @@
 
 void gWorldFree(gWorld *world) {
     if (world->allocator != NULL) gAllocatorSelfFree(world->allocator);
+    gQueryCacheFree(&world->queryCache);
     free(world);
 }
 
@@ -23,6 +24,7 @@ gWorld *gWorldCreate() {
     }
 
     gChunkedListInit(w->allocator, &w->archetypes, sizeof(gArchetype), gWorldArchetypeInitialCapacity);
+    gQueryCacheInit(&w->queryCache);
 
     return w;
 }

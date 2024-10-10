@@ -18,6 +18,8 @@ typedef struct {
     gTable components;
     gVector free;
     gSlice map;
+    int firstEntity;
+    int lastEntity;
     unsigned int id;
 } gArchetype;
 

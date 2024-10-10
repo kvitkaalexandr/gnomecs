@@ -3,6 +3,7 @@
 #include <assert.h>
 #include <stdlib.h>
 #include <string.h>
+#include "allocators/helpers.h"
 
 //todo: rewrite this to use relative pointers
 
@@ -10,9 +11,11 @@ size_t getBucket(gHashMap *map, const void *key) {
     return map->hashFunction(key, map->keySize) % map->capacity;
 }
 
-gHashMap *gHashMapCreate(size_t keySize, size_t valueSize, gHashFunction hashFunction, gEqualFunction equalFunction, size_t capacity) {
-    gHashMap *map = malloc(sizeof(gHashMap));
+gHashMap *gHashMapCreate(gAllocator *allocator, size_t keySize, size_t valueSize, gHashFunction hashFunction, gEqualFunction equalFunction, size_t capacity) {
+    gHashMap *map =  gAllocatorAbsAlloc(allocator, sizeof(gHashMap));
     if (map == NULL) return NULL;
+
+    map->allocator = allocator;
 
     map->keySize = keySize;
     map->valueSize = valueSize;
@@ -20,7 +23,7 @@ gHashMap *gHashMapCreate(size_t keySize, size_t valueSize, gHashFunction hashFun
     map->count = 0;
     map->hashFunction = hashFunction;
     map->equalFunction = equalFunction;
-    map->buckets = malloc(sizeof(gHashMapEntry) * capacity);
+    map->buckets = gAllocatorAbsAlloc(allocator, sizeof(gHashMapEntry) * capacity);
     memset(map->buckets, 0, sizeof(gHashMapEntry) * capacity);
 
     return map;
@@ -33,14 +36,14 @@ void gHashMapFree(gHashMap *map) {
             gHashMapEntry *entry = map->buckets[i];
             while (entry != NULL) {
                 gHashMapEntry *next = entry->next;
-                free(entry->key);
-                free(entry->value);
-                free(entry);
+                gAllocatorAbsFree(map->allocator, entry->key);
+                gAllocatorAbsFree(map->allocator, entry->value);
+                gAllocatorAbsFree(map->allocator, entry);
                 entry = next;
             }
         }
     }
-    free(map);
+    gAllocatorAbsFree(map->allocator, map);
 }
 
 gHashMapEntry *lookup(const gHashMap *map, const int bucket, const void *key) {
@@ -58,17 +61,18 @@ gHashMapEntry *lookup(const gHashMap *map, const int bucket, const void *key) {
 }
 
 gHashMapEntry *addNewEntry(const gHashMap *map, const int bucket, const void *key) {
-    gHashMapEntry *newEntry = malloc(sizeof(gHashMapEntry));
+
+    gHashMapEntry *newEntry = gAllocatorAbsAlloc(map->allocator, sizeof(gHashMapEntry));
     if (newEntry == NULL) return NULL;
-    newEntry->key = malloc(map->keySize);
+    newEntry->key = gAllocatorAbsAlloc(map->allocator, map->keySize);
     if (newEntry->key == NULL) {
-        free(newEntry);
+        gAllocatorAbsFree(map->allocator, newEntry);
         return NULL;
     }
-    newEntry->value = malloc(map->valueSize);
+    newEntry->value = gAllocatorAbsAlloc(map->allocator, map->valueSize);
     if (newEntry->value == NULL) {
-        free(newEntry->key);
-        free(newEntry);
+        gAllocatorAbsFree(map->allocator, newEntry->key);
+        gAllocatorAbsFree(map->allocator, newEntry);
         return NULL;
     }
     gHashMapEntry *head = map->buckets[bucket];
@@ -82,7 +86,7 @@ void resizeHashMap(gHashMap *map) {
     const size_t newCapacity = oldCapacity * 2;
     gHashMapEntry **oldBuckets = map->buckets;
 
-    map->buckets = malloc(sizeof(gHashMapEntry) * newCapacity);
+    map->buckets = gAllocatorAbsAlloc(map->allocator, sizeof(gHashMapEntry) * newCapacity);
     if (map->buckets == NULL) {
         map->buckets = oldBuckets;
         return;
@@ -101,7 +105,7 @@ void resizeHashMap(gHashMap *map) {
         }
     }
 
-    free(oldBuckets);
+    gAllocatorAbsFree(map->allocator, oldBuckets);
 }
 
 bool gHashMapAdd(gHashMap *map, const void *key, const void *value) {
@@ -148,9 +152,9 @@ bool gHashMapRemove(gHashMap *map, const void *key) {
 
     if (map->equalFunction(entry->key, key, map->keySize)) {
         map->buckets[bucket] = entry->next;
-        free(entry->key);
-        free(entry->value);
-        free(entry);
+        gAllocatorAbsFree(map->allocator, entry->key);
+        gAllocatorAbsFree(map->allocator, entry->value);
+        gAllocatorAbsFree(map->allocator, entry);
         map->count--;
         return true;
     }
@@ -158,9 +162,9 @@ bool gHashMapRemove(gHashMap *map, const void *key) {
     while (entry->next != NULL) {
         if (map->equalFunction(entry->next->key, key, map->keySize)) {
             gHashMapEntry *next = entry->next->next;
-            free(entry->next->key);
-            free(entry->next->value);
-            free(entry->next);
+            gAllocatorAbsFree(map->allocator, entry->next->key);
+            gAllocatorAbsFree(map->allocator, entry->next->value);
+            gAllocatorAbsFree(map->allocator, entry->next);
             entry->next = next;
             map->count--;
             return true;

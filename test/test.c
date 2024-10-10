@@ -293,6 +293,10 @@ _component(velocity, {
     float x, y, z;
 })
 
+_component(foo, {
+    int i;
+})
+
 void worldTest() {
     gWorld *w = gWorldCreate();
 
@@ -308,7 +312,7 @@ void worldTest() {
     _createEntity(me2, _componentId(position), _componentId(velocity));
     _createEntity(se0, _componentId(position));
 
-    testInt(w->archetypes.count, 2);
+    testInt((int)w->archetypes.count, 2);
 
     {
         _useEntity(se0);
@@ -325,16 +329,16 @@ void worldTest() {
     {
         _useEntity(me0);
         position *pos0 = _take(position);
-        testFloat(pos0->x, 0);
-        testFloat(pos0->y, 0);
-        testFloat(pos0->z, 0);
+        testFloat(pos0->x, 0.0f);
+        testFloat(pos0->y, 0.0f);
+        testFloat(pos0->z, 0.0f);
 
         _reuseEntity(me1)
         position *pos1 = _take(position);
         pos1->x += 42;
-        testFloat(pos1->x, 42);
-        testFloat(pos1->y, 0);
-        testFloat(pos1->z, 0);
+        testFloat(pos1->x, 42.0f);
+        testFloat(pos1->y, 0.0f);
+        testFloat(pos1->z, 0.0f);
     }
 
 
@@ -482,7 +486,11 @@ bool testIntEqualFunction(const void *key1, const void *key2, const size_t keySi
 }
 
 void hashMapTest() {
+
+    gAllocator *alloc = gAllocatorCreate(16000, 32);
+
     gHashMap *hm = gHashMapCreate(
+        alloc,
         sizeof(int),
         sizeof(int),
         &testIntHashFunction,
@@ -493,7 +501,7 @@ void hashMapTest() {
     testBool(gHashMapAdd(hm, &(int){420},  &(int){42}), true);
     testBool(gHashMapAdd(hm, &(int){6969}, &(int){0}),  true);
     testBool(gHashMapAdd(hm, &(int){6969}, &(int){0}),  false);
-    testInt(hm->count, 3);
+    testInt((int)hm->count, 3);
 
     const int *v0 = gHashMapAt(hm, &(int){42});
     testInt(*v0, 69);
@@ -519,6 +527,99 @@ void hashMapTest() {
     testBool(gHashMapContains(hm, &(int){6969}),   true);
 
     gHashMapFree(hm);
+    gAllocatorSelfFree(alloc);
+}
+
+void queryCacheTest() {
+    gWorld *w = gWorldCreate();
+
+    _useWorld(w);
+
+    _addComponentToWorld(position);
+    _addComponentToWorld(velocity);
+    _addComponentToWorld(tagComponent);
+    _addComponentToWorld(foo);
+
+    _createEntity(me0, _componentId(position));
+
+    {
+        int count = 0;
+        _makeQuery
+            _with(position)
+        _foreach {
+            count++;
+        }
+        testInt(count, 1);
+        testInt((int)w->queryCache.data->count, 1);
+        const gQueryCacheEntry *e = gHashMapAt(w->queryCache.data, &__q);
+        testBool(e != NULL, true);
+        testInt(e->archetypesCount, 1);
+    }
+
+    _createEntity(me1, _componentId(position), _componentId(velocity));
+
+    {
+        int count = 0;
+        _makeQuery
+            _with(position)
+        _foreach {
+            count++;
+        }
+        testInt(count, 2);
+        testInt((int)w->queryCache.data->count, 1);
+        const gQueryCacheEntry *e = gHashMapAt(w->queryCache.data, &__q);
+        testBool(e != NULL, true);
+        testInt(e->archetypesCount, 2);
+
+    }
+
+    {
+        int count = 0;
+        _makeQuery
+            _with(position)
+        _foreach {
+            if (count == 0) {
+                _createEntity(me2, _componentId(position), _componentId(velocity), _componentId(tagComponent));
+            }
+            count++;
+        }
+        testInt(count, 3);
+        testInt((int)w->queryCache.data->count, 1);
+        const gQueryCacheEntry *e = gHashMapAt(w->queryCache.data, &__q);
+        testBool(e != NULL, true);
+        testInt(e->archetypesCount, 3);
+    }
+
+    {
+        int count = 0;
+        _makeQuery
+            _with(position)
+            _with(velocity)
+        _foreach {
+            count++;
+        }
+        testInt(count, 2);
+        testInt((int)w->queryCache.data->count, 2);
+        const gQueryCacheEntry *e = gHashMapAt(w->queryCache.data, &__q);
+        testBool(e != NULL, true);
+        testInt(e->archetypesCount, 3);
+    }
+
+    {
+        int count = 0;
+        _makeQuery
+            _with(foo)
+            _with(velocity)
+        _foreach {
+            count++;
+        }
+        testInt(count, 0);
+        testInt((int)w->queryCache.data->count, 3);
+        const gQueryCacheEntry *e = gHashMapAt(w->queryCache.data, &__q);
+        testBool(e != NULL, true);
+        testInt(e->archetypesCount, 3);
+    }
+    gWorldFree(w);
 }
 
 int main() {
@@ -531,6 +632,7 @@ int main() {
     runTestCase(worldTest);
     runTestCase(xTest);
     runTestCase(hashMapTest);
+    runTestCase(queryCacheTest);
     printf("All test passed!");
     return 0;
 }

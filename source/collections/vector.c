@@ -58,6 +58,7 @@ bool gVectorSet(const gAllocator *allocator, gVector *vector, const size_t index
 }
 
 void *gVectorAt(const gAllocator *allocator, const gVector *vector, const size_t index) {
+    if (index >= vector->count) return NULL;
     return gSliceAt(allocator, &vector->data, index);
 }
 

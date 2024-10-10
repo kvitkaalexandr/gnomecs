@@ -90,4 +90,6 @@ bool gBitSetEmpty(const gBitSet* bitSet);
  */
 unsigned int gBitSetCount(const gBitSet* bitSet);
 
+int gBitSetGetHashCode(const gBitSet bitSet);
+
 #endif //BITSET_H

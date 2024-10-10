@@ -74,10 +74,15 @@ typedef struct {
  *     printf("Entity %d has Foo\n", __entity.id);
  * }
  */
-#define _foreach gEntityIterator __iter = {0}; \
-gEntityIteratorInit(__cw, &__iter, __q); \
-gEntity __entity = {0}; \
-while(gEntityIteratorNext(__cw, &__iter, &__entity))
+#ifdef DISABLE_CACHE
+#define _foreach gAllFilteredEntitiesIterator __iter = gAllFilteredEntitiesIteratorCreate(__cw, __q); \
+    gEntity __entity = {0}; \
+    while(gAllFilteredEntitiesIteratorIterate(&__iter, &__entity) == gEntityIterator_continue)
+#else
+#define _foreach gAllFilteredEntitiesCacheIterator __iter = gAllFilteredEntitiesCacheIteratorCreate(__cw, __q); \
+    gEntity __entity = {0}; \
+    while(gAllFilteredEntitiesCacheIteratorIterate(&__iter, &__entity) == gEntityIterator_continue)
+#endif
 
 /**
  * Get component from the current entity
@@ -106,23 +111,44 @@ while(gEntityIteratorNext(__cw, &__iter, &__entity))
  */
 #define _has(component) gWorldHasComponent(__cw, __entity, _componentId(component))
 
+#ifdef DISABLE_CACHE
 #define _single(to, component) component *to = NULL; \
 { \
     gQuery __q = {0}; \
     gBitSetSet(&__q.all, _componentId(component)); \
-    gEntityIterator __iter = {0}; \
-    gEntityIteratorInit(__cw, &__iter, __q); \
+    gAllFilteredEntitiesIterator __iter = gAllFilteredEntitiesIteratorCreate(__cw, __q); \
     gEntity e = {0}; \
-    gEntityIteratorNext(__cw, &__iter, &e); \
+    gAllFilteredEntitiesIteratorIterate(&__iter,  &e); \
     to = (component*)gWorldGetComponent(__cw, e, _componentId(component)); \
 }
 #define _singleEntity(to, component) gEntity to = {0}; \
 { \
     gQuery __q = {0}; \
     gBitSetSet(&__q.all, _componentId(component)); \
-    gEntityIterator __iter = {0}; \
-    gEntityIteratorInit(__cw, &__iter, __q); \
-    gEntityIteratorNext(__cw, &__iter, &to); \
+    gAllFilteredEntitiesIterator __iter = gAllFilteredEntitiesIteratorCreate(__cw, __q); \
+    gAllFilteredEntitiesIteratorIterate(&__iter, &to); \
 }
+#else
+#define _single(to, component) component *to = NULL; \
+{ \
+    gQuery __q = {0}; \
+    gBitSetSet(&__q.all, _componentId(component)); \
+    gAllFilteredEntitiesCacheIterator __iter = gAllFilteredEntitiesCacheIteratorCreate(__cw, __q); \
+    gEntity e = {0}; \
+    gAllFilteredEntitiesCacheIteratorIterate(&__iter,  &e); \
+    to = (component*)gWorldGetComponent(__cw, e, _componentId(component)); \
+}
+
+#define _singleEntity(to, component) gEntity to = {0}; \
+{ \
+    gQuery __q = {0}; \
+    gBitSetSet(&__q.all, _componentId(component)); \
+    gAllFilteredEntitiesCacheIterator __iter = gAllFilteredEntitiesCacheIteratorCreate(__cw, __q); \
+    gAllFilteredEntitiesCacheIteratorIterate(&__iter, &to); \
+}
+#endif
+
+int gQueryGetHashCode(gQuery query);
+bool gQueryEquals(gQuery a, gQuery b);
 
 #endif //QUERY_H

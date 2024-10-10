@@ -7,6 +7,8 @@
 bool gArchetypeInit(gAllocator *alloc, gArchetype *archetype, gComponentsDb *db, gBitSet definition, unsigned int id) {
     archetype->definition = definition;
     archetype->id = id;
+    archetype->firstEntity = -1;
+    archetype->lastEntity = 0;
     const unsigned int compCount = gBitSetCount(&definition);
 
     gVectorInit(alloc, &archetype->free, sizeof(size_t), 32);
@@ -57,23 +59,31 @@ gEntity gArchetypeCreateEntity(gAllocator *alloc, gArchetype *archetype) {
         gVectorRemove(alloc, &archetype->free, archetype->free.count - 1);
 
         gLogVerbose("Reuse entity. Archetype id: %d, Entity index: %d, Entity version: %d", logTag, e.archetype, e.index, e.version);
-        return e;
+    }
+    else {
+        gEntityStatus status;
+        status.version = 1;
+        status.isAlive = true;
+        gChunkedListPushBack(alloc, statusRow, &status);
+
+        for (size_t i = 1, max = archetype->components.rows.count; i < max; i++) {
+            gChunkedList *row = gTableRowAt(alloc, &archetype->components, i);
+            gChunkedListPushBackDefault(alloc, row);
+        }
+
+        e.index = statusRow->count - 1;
+        e.version = status.version;
+
+        gLogVerbose("Create new entity. Archetype id: %d, Entity index: %d, Entity version: %d", logTag, e.archetype, e.index, e.version);
     }
 
-    gEntityStatus status;
-    status.version = 1;
-    status.isAlive = true;
-    gChunkedListPushBack(alloc, statusRow, &status);
-
-    for (size_t i = 1, max = archetype->components.rows.count; i < max; i++) {
-        gChunkedList *row = gTableRowAt(alloc, &archetype->components, i);
-        gChunkedListPushBackDefault(alloc, row);
+    if (archetype->firstEntity < 0 || e.index < archetype->firstEntity) {
+        archetype->firstEntity = e.index;
+    }
+    if (e.index >= archetype->lastEntity) {
+        archetype->lastEntity = e.index + 1;
     }
 
-    e.index = statusRow->count - 1;
-    e.version = status.version;
-
-    gLogVerbose("Create new entity. Archetype id: %d, Entity index: %d, Entity version: %d", logTag, e.archetype, e.index, e.version);
     return e;
 }
 
@@ -98,6 +108,14 @@ bool gArchetypeDestroyEntity(const gAllocator *alloc, gArchetype *archetype, con
     gVectorAdd(alloc, &archetype->free, &e.index);
 
     gLogVerbose("Destroy entity. Archetype id: %d, Entity index: %d, Entity version: %d", logTag, e.archetype, e.index, e.version);
+
+    if (e.index == archetype->firstEntity) archetype->firstEntity++;
+    if (e.index == archetype->lastEntity - 1) archetype->lastEntity--;
+    if (archetype->firstEntity >= archetype->lastEntity) {
+        archetype->firstEntity = -1;
+        archetype->lastEntity = 0;
+    }
+
     return true;
 }
 

@@ -1,6 +1,8 @@
 #ifndef ENTITY_MANAGER_H
 #define ENTITY_MANAGER_H
 
+#include <search/querycache.h>
+
 #include "../archetype/archetype.h"
 #include "entity.h"
 #include "../components/componentsdb.h"
@@ -13,6 +15,7 @@ typedef struct {
     gAllocator *allocator;
     gChunkedList archetypes;
     gComponentsDb componentsDb;
+    gQueryCache queryCache;
     int version;
 } gWorld;
 

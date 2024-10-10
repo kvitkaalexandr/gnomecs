@@ -83,3 +83,12 @@ unsigned int gBitSetCount(const gBitSet* bitSet) {
     }
     return count;
 }
+
+
+int gBitSetGetHashCode(const gBitSet bitSet) {
+    int hash = 0;
+    for (size_t i = 0; i < gBitSetSize; i++) {
+        hash = 31 * hash + bitSet.bits[i];
+    }
+    return hash;
+}
