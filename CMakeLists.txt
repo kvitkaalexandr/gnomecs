@@ -7,7 +7,6 @@ file(GLOB_RECURSE PROJECT_SOURCES CONFIGURE_DEPENDS "${CMAKE_CURRENT_LIST_DIR}/s
 
 add_library(GnomeCSLib STATIC ${PROJECT_SOURCES})
 target_include_directories(GnomeCSLib PUBLIC ./include)
-install(DIRECTORY include/ DESTINATION "${CMAKE_CURRENT_SOURCE_DIR}/gnomecs/include")
 
 add_executable(GnomeCSTest test/test.c ${PROJECT_SOURCES})
 target_include_directories(GnomeCSTest PRIVATE ./include)
