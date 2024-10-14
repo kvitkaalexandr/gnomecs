@@ -68,7 +68,7 @@ _foreach {
 }
 ```
 
-More examples can be found in the example repository (TODO: add link).
+More examples can be found in the example repository [MORE EXAMPLES](https://github.com/kvitkaalexandr/gnomecs-example).
 
 ## Fun fact
 
