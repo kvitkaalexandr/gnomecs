@@ -38,7 +38,7 @@ typedef struct {
 } gAllFilteredEntitiesCacheIterator;
 
 
-gEntityIterator gEntityIteratorCreate(gWorld *world, gArchetype *archetype);
+gEntityIterator gEntityIteratorCreate(const gWorld *world, gArchetype *archetype);
 
 int gEntityIteratorIterate(gEntityIterator *it, gEntity *outEntity);
 

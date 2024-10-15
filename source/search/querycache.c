@@ -31,6 +31,12 @@ void gQueryCacheFree(const gQueryCache *cache) {
     gAllocatorSelfFree(cache->allocator);
 }
 
+void gQueryCacheReset(gQueryCache *cache) {
+    assert(cache != NULL);
+    gQueryCacheFree(cache);
+    gQueryCacheInit(cache);
+}
+
 void freeEntry(const gQueryCache *cache, const gQuery *query, const gQueryCacheEntry *entry) {
     gVectorFree(cache->allocator, entry->archetypes);
     gHashMapRemove(cache->data, query);

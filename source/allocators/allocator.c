@@ -56,7 +56,7 @@ void gAllocatorUseBlock(gAllocatorBlock* block) {
     block->nextFree = gNull;
 }
 
-gPtr gAllocatorAlloc(gAllocator* allocator, const size_t size) {
+gPtr gAllocatorAlloc(const gAllocator* allocator, const size_t size) {
     assert(size > 0);
     gAllocatorState* state = gAllocatorGetState(allocator);
     const size_t fittedSize = max(size, state->defaultBlockSize);
@@ -95,7 +95,7 @@ gPtr gAllocatorAlloc(gAllocator* allocator, const size_t size) {
     return gNull;
 }
 
-void gAllocatorFree(gAllocator* allocator, const gPtr ptr) {
+void gAllocatorFree(const gAllocator* allocator, const gPtr ptr) {
     assert(ptr != gNull);
     gAllocatorState* state = gAllocatorGetState(allocator);
     const gPtr blockPtr = ptr - sizeof(gAllocatorBlock);
@@ -105,7 +105,7 @@ void gAllocatorFree(gAllocator* allocator, const gPtr ptr) {
     state->freeBlock = blockPtr;
 }
 
-gPtr gAllocatorReAlloc(gAllocator *allocator, const gPtr ptr, const size_t newSize) {
+gPtr gAllocatorReAlloc(const gAllocator *allocator, const gPtr ptr, const size_t newSize) {
     assert(ptr != gNull);
     const gAllocatorBlock* block = gAllocatorGetBlock(allocator, ptr);
     if (block->size >= newSize) return ptr;
@@ -118,7 +118,7 @@ gPtr gAllocatorReAlloc(gAllocator *allocator, const gPtr ptr, const size_t newSi
     return newPtr;
 }
 
-gAllocatorBlock* gAllocatorGetBlock(gAllocator* allocator, const gPtr ptr) {
+gAllocatorBlock* gAllocatorGetBlock(const gAllocator* allocator, const gPtr ptr) {
     const gPtr blockPtr = ptr - sizeof(gAllocatorBlock);
     gAllocatorBlock* block = allocator->relToAbs(allocator, blockPtr);
     return block;

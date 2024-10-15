@@ -77,14 +77,14 @@ void gAllocatorSelfFree(gAllocator* allocator);
  * @param size The size of the memory to allocate
  * @return The pointer to the allocated memory
  */
-gPtr gAllocatorAlloc(gAllocator* allocator, const size_t size);
+gPtr gAllocatorAlloc(const gAllocator* allocator, const size_t size);
 
 /**
  * Free memory
  * @param allocator The allocator
  * @param ptr The pointer to the memory to free
  */
-void gAllocatorFree(gAllocator* allocator, const gPtr ptr);
+void gAllocatorFree(const gAllocator* allocator, const gPtr ptr);
 
 /**
  * Reallocate memory
@@ -93,7 +93,7 @@ void gAllocatorFree(gAllocator* allocator, const gPtr ptr);
  * @param newSize The new size of the memory
  * @return The pointer to the reallocated memory
  */
-gPtr gAllocatorReAlloc(gAllocator *allocator, const gPtr ptr, const size_t newSize);
+gPtr gAllocatorReAlloc(const gAllocator *allocator, const gPtr ptr, const size_t newSize);
 
 /**
  * Copy the allocator to a different location
@@ -122,7 +122,7 @@ void gAllocatorUseBlock(gAllocatorBlock* block);
 /**
  * Private function to get the block of a pointer
  */
-gAllocatorBlock* gAllocatorGetBlock(gAllocator* allocator, const gPtr ptr);
+gAllocatorBlock* gAllocatorGetBlock(const gAllocator* allocator, const gPtr ptr);
 
 #define align(ptr, alignment) ((ptr + alignment - 1) & ~(alignment - 1))
 #define max(a,b) \

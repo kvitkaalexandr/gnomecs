@@ -16,5 +16,6 @@ typedef struct {
 
 bool gQueryCacheInit(gQueryCache *cache);
 void gQueryCacheFree(const gQueryCache *cache);
+void gQueryCacheReset(gQueryCache *cache);
 
 #endif //QUERYCACHE_H

@@ -3,9 +3,9 @@
 #include <assert.h>
 #include <allocators/helpers.h>
 
-gEntityIterator gEntityIteratorCreate(gWorld *world, gArchetype *archetype) {
+gEntityIterator gEntityIteratorCreate(const gWorld *world, gArchetype *archetype) {
     return (gEntityIterator) {
-        .world = world,
+        .world = (gWorld*)world,
         .archetype = archetype,
         .index = -1
     };

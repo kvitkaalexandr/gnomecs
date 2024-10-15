@@ -90,4 +90,5 @@ void gWorldCopyTo(const gWorld *world, void *to) {
 
 void gWorldCopyFrom(gWorld *world, const void *from, const size_t size) {
     gAllocatorCopyFrom(world->allocator, from, size);
+    gQueryCacheReset(&world->queryCache);
 }
